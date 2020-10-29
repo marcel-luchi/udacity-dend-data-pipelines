@@ -1,0 +1,11 @@
+.idea/
+__pycache__/
+airflow-webserver.pid
+airflow.cfg
+airflow.db
+logs/
+unittests.cfg
+dags/.DS_Store
+plugins/.DS_Store
+plugins/helpers/.DS_Store
+plugins/operators/.DS_Store
