@@ -12,11 +12,10 @@ from helpers import SqlQueries
 default_args = {
     'owner': 'udacity',
     'start_date': datetime(2018, 11, 1),
-    'end_date': datetime(2018, 11, 30),
     'depends_on_past': False,
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
-    'catchup': False,
+    'catchup': False
 }
 
 dag = DAG('udacity_dend_data_pipelines',
@@ -66,7 +65,7 @@ load_user_dimension_table = LoadDimensionOperator(
     table='users',
     redshift_conn_id='redshift_sparkify',
     query=SqlQueries.user_table_insert,
-    truncate_table=True
+    truncate_table=False
 )
 
 load_song_dimension_table = LoadDimensionOperator(
@@ -93,7 +92,7 @@ load_time_dimension_table = LoadDimensionOperator(
     table='time',
     redshift_conn_id='redshift_sparkify',
     query=SqlQueries.time_table_insert,
-    truncate_table=True
+    truncate_table=False
 )
 
 run_quality_checks = DataQualityOperator(
@@ -101,12 +100,10 @@ run_quality_checks = DataQualityOperator(
     dag=dag,
     redshift_conn_id='redshift_sparkify',
     tables=['artists', 'songs', 'songplays', 'time', 'users'],
-    validation_threshold=100
+    validation_threshold=50
 )
 
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
-
-
 
 start_operator >> stage_events_to_redshift
 start_operator >> stage_songs_to_redshift

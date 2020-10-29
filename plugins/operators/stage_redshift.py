@@ -6,7 +6,7 @@ import os
 
 
 class StageToRedshiftOperator(BaseOperator):
-    template_fields = ("s3_dir", )
+    template_fields = ("s3_date", )
     ui_color = '#358140'
 
     @apply_defaults
@@ -47,11 +47,13 @@ class StageToRedshiftOperator(BaseOperator):
         credentials = aws.get_credentials()
         s3_path = os.path.join(self.s3_bucket, self.s3_date.format(**context))
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
-
+        self.log.info(f"Truncating table{self.table}")
         redshift.run(self.truncate_table)
+        self.log.info(f"Starting to load table{self.table}")
         redshift.run(self.staging_copy.format(self.table,
                                               s3_path,
                                               credentials.access_key,
                                               credentials.secret_key,
                                               self.file_type,
                                               self.json_path))
+        self.log.info(f"Finished to load table{self.table}")
