@@ -2,6 +2,7 @@ from airflow.hooks.postgres_hook import PostgresHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
+
 class LoadDimensionOperator(BaseOperator):
 
     ui_color = '#80BD9E'
@@ -18,7 +19,7 @@ class LoadDimensionOperator(BaseOperator):
         self.table = table
         self.redshift_conn_id = redshift_conn_id
         self.query = query
-        self.truncate_table=truncate_table
+        self.truncate_table = truncate_table
 
     def execute(self, context):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)

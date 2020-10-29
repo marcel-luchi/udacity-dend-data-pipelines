@@ -3,7 +3,7 @@ import os
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
-                                LoadDimensionOperator, DataQualityOperator)
+                               LoadDimensionOperator, DataQualityOperator)
 from helpers import SqlQueries
 
 # AWS_KEY = os.environ.get('AWS_KEY')
@@ -22,7 +22,7 @@ default_args = {
 dag = DAG('udacity_dend_data_pipelines',
           default_args=default_args,
           description='Load and transform data in Redshift with Airflow',
-          #schedule_interval='0 * * * *',
+          schedule_interval='0 * * * *',
           max_active_runs=1
           )
 
@@ -32,7 +32,7 @@ stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
     dag=dag,
     s3_bucket="s3://udacity-dend/log_data/",
-    s3_dir='{execution_date.year}/{execution_date.month}/{execution_date.year}-{execution_date.month}-{execution_date.day}',
+    s3_date='{execution_date.year}/{execution_date.month}/{execution_date.year}-{execution_date.month}-{execution_date.day}',
     redshift_conn_id='redshift_sparkify',
     aws_conn_id='aws_credentials',
     table='staging_events',
@@ -41,16 +41,16 @@ stage_events_to_redshift = StageToRedshiftOperator(
     provide_context=True
 )
 
-# stage_songs_to_redshift = StageToRedshiftOperator(
-#     task_id='Stage_songs',
-#     dag=dag,
-#     s3_bucket='s3://udacity-dend/song_data/',
-#     redshift_conn_id='redshift_sparkify',
-#     aws_conn_id='aws_credentials',
-#     table='staging_songs',
-#     file_type='json',
-#     provide_context=True
-# )
+stage_songs_to_redshift = StageToRedshiftOperator(
+    task_id='Stage_songs',
+    dag=dag,
+    s3_bucket='s3://udacity-dend/song_data/',
+    redshift_conn_id='redshift_sparkify',
+    aws_conn_id='aws_credentials',
+    table='staging_songs',
+    file_type='json',
+    provide_context=True
+ )
 
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
@@ -100,7 +100,8 @@ run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
     dag=dag,
     redshift_conn_id='redshift_sparkify',
-    tables=['artists', 'songs', 'songplays', 'time', 'users']
+    tables=['artists', 'songs', 'songplays', 'time', 'users'],
+    validation_threshold=100
 )
 
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
@@ -108,11 +109,11 @@ end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
 
 start_operator >> stage_events_to_redshift
-#start_operator >> stage_songs_to_redshift
-#
+start_operator >> stage_songs_to_redshift
+
 stage_events_to_redshift >> load_songplays_table
-#stage_songs_to_redshift >> load_songplays_table
-#
+stage_songs_to_redshift >> load_songplays_table
+
 load_songplays_table >> load_user_dimension_table
 load_songplays_table >> load_song_dimension_table
 load_songplays_table >> load_artist_dimension_table

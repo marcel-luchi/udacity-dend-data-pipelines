@@ -2,6 +2,7 @@ from airflow.hooks.postgres_hook import PostgresHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
+
 class DataQualityOperator(BaseOperator):
 
     ui_color = '#89DA59'
@@ -11,18 +12,21 @@ class DataQualityOperator(BaseOperator):
                  # Define your operators params (with defaults) here
                  tables=[],
                  redshift_conn_id='redshift_sparkify',
+                 validation_threshold=1,
                  *args, **kwargs):
 
         super(DataQualityOperator, self).__init__(*args, **kwargs)
         self.tables = tables
         self.redshift_conn_id = redshift_conn_id
+        self.validation_threshold = validation_threshold
 
     def execute(self, context):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
         self.log.info('DataQualityOperator not implemented yet')
         for table in self.tables:
             result = redshift.get_records(f"select count(1) from {table}")
-            if len(result) < 1 or len(result[0]) < 1 or result[0][0] == 0:
+            if len(result) < 1 or len(result[0]) < 1 or result[0][0] < self.validation_threshold:
                 self.log.error(f"Table {table} has returned no rows.")
-                raise KeyError(f"Data quality error. Table {table} returned no records.")
+                raise KeyError(f"Data quality error. Table {table} returned less records then the threshold\
+                                 {self.validation_threshold} records.")
             self.log.info(f"Table {table} validated. Table has {result[0][0]} rows.")

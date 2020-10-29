@@ -4,6 +4,7 @@ from airflow.utils.decorators import apply_defaults
 from airflow.contrib.hooks.aws_hook import AwsHook
 import os
 
+
 class StageToRedshiftOperator(BaseOperator):
     template_fields = ("s3_dir", )
     ui_color = '#358140'
@@ -12,7 +13,7 @@ class StageToRedshiftOperator(BaseOperator):
     def __init__(self,
                  redshift_conn_id="redshift_sparkify",
                  s3_bucket='',
-                 s3_dir='',
+                 s3_date='',
                  aws_conn_id="aws_credentials",
                  table='',
                  file_type='json',
@@ -22,7 +23,7 @@ class StageToRedshiftOperator(BaseOperator):
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
         self.redshift_conn_id = redshift_conn_id
         self.s3_bucket = s3_bucket
-        self.s3_dir = s3_dir
+        self.s3_date = s3_date
         self.aws_conn_id = aws_conn_id
         self.table = table
         self.file_type = file_type
@@ -44,7 +45,7 @@ class StageToRedshiftOperator(BaseOperator):
     def execute(self, context):
         aws = AwsHook(self.aws_conn_id)
         credentials = aws.get_credentials()
-        s3_path = os.path.join(self.s3_bucket, self.s3_dir.format(**context))
+        s3_path = os.path.join(self.s3_bucket, self.s3_date.format(**context))
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
         redshift.run(self.truncate_table)
