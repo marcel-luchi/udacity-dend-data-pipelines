@@ -13,7 +13,8 @@ After instance is created, run create_tables.sql in order to create the needed t
 #### Airflow Connections
 The below connections need to be setup in the airflow instance:
 **redshift_sparkify** - Postgres connection pointing to your Redshift cluster/database.
-**_credentials** - AWS connection to configure key/secret
+
+**credentials** - AWS connection to configure key/secret
 
 #### Airflow Variables
 **log_bucket**  - Bucket containing sparkify log files, usually: s3://udacity-dend/log_data
